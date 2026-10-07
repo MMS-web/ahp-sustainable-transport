@@ -1,8 +1,7 @@
-```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>محاكاة عملية التحليل الهرمي (AHP): النقل المستدام</title>
 
@@ -21,9 +20,32 @@
   --mut:#4F7471;
   --line:#BCDDDC;
   --tint:#EEF7F6;
+  box-sizing:border-box;
 }
 
-*{box-sizing:border-box}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10211f;
+    --card:#18302d;
+    --ink:#FFEDD1;
+    --mut:#BCDDDC;
+    --line:#2e5551;
+    --tint:#1e3b38;
+  }
+}
+
+:root[data-theme="dark"]{
+  --bg:#10211f;
+  --card:#18302d;
+  --ink:#FFEDD1;
+  --mut:#BCDDDC;
+  --line:#2e5551;
+  --tint:#1e3b38;
+}
+
+*{
+  box-sizing:border-box;
+}
 
 html{
   scroll-padding-top:90px;
@@ -39,24 +61,41 @@ body{
 }
 
 header{
-  background:linear-gradient(135deg,var(--sap),var(--arc) 65%,var(--lace));
+  background:linear-gradient(
+    135deg,
+    var(--sap),
+    var(--arc) 65%,
+    var(--lace)
+  );
   color:#16403d;
   position:sticky;
   top:0;
   z-index:10;
   box-shadow:0 2px 10px rgba(0,0,0,.12);
-  padding:10px 14px;
+  padding:
+    calc(8px + env(safe-area-inset-top,0px))
+    14px
+    8px;
   display:flex;
   flex-wrap:wrap;
   align-items:center;
   justify-content:center;
-  gap:5px 14px;
+  gap:4px 14px;
   text-align:center;
 }
 
-header p,
-header .c{
+header p{
   margin:0;
+  background:var(--bal);
+  color:#fff;
+  border-radius:99px;
+  padding:0 12px;
+  font-weight:700;
+  font-size:13px;
+}
+
+header .c{
+  display:inline-block;
   background:var(--bal);
   color:#fff;
   border-radius:99px;
@@ -304,7 +343,11 @@ button:disabled{
 .bar .t span{
   display:block;
   height:100%;
-  background:linear-gradient(90deg,var(--sap),var(--bal));
+  background:linear-gradient(
+    90deg,
+    var(--sap),
+    var(--bal)
+  );
   border-radius:99px;
   transition:width .6s;
 }
@@ -393,12 +436,15 @@ a{
   text-align:center;
   font-weight:700;
   font-size:13px;
-  padding:4px 10px;
+  padding:
+    4px 10px
+    calc(4px + env(safe-area-inset-bottom,0px));
   box-shadow:0 -4px 16px rgba(0,0,0,.12);
   line-height:1.4;
 }
 
 @media(max-width:560px){
+
   .pair{
     grid-template-columns:1fr 1fr;
   }
@@ -411,6 +457,10 @@ a{
   .bar{
     grid-template-columns:100px 1fr 46px;
   }
+
+  .card{
+    padding:17px;
+  }
 }
 </style>
 </head>
@@ -418,22 +468,39 @@ a{
 <body>
 
 <header>
-  <span class="c">مقرر صنع السياسات البيئية</span>
+
+  <span class="c">
+    مقرر صنع السياسات البيئية
+  </span>
+
   <h1>
     عملية التحليل الهرمي (AHP)
     <small>Analytic Hierarchy Process</small>
   </h1>
-  <p>محاكاة تفاعلية: كيف نختار نظام النقل المستدام لمدينتنا؟</p>
+
+  <p>
+    محاكاة تفاعلية: كيف نختار نظام النقل المستدام لمدينتنا؟
+  </p>
+
 </header>
 
 <main>
+
   <div class="prog" id="prog"></div>
+
   <div class="card" id="view"></div>
+
 </main>
 
-<div class="fix">د. مها محمود الصباغ - جامعة الخليج العربي</div>
+<div class="fix">
+  د. مها محمود الصباغ - جامعة الخليج العربي
+</div>
 
 <script>
+
+/* =========================
+   البيانات الأساسية
+========================= */
 
 const C = [
   "البيئي: خفض انبعاثات CO₂",
@@ -471,24 +538,35 @@ const NM = {
 const RI = {
   1:0,
   2:0,
-  3:.58
+  3:0.58,
+  4:0.90,
+  5:1.12
 };
 
 const D = {
   c:[1,2,1],
-  a:[[-2],[4],[1]]
+
+  a:[
+    [-2],
+    [4],
+    [1]
+  ]
 };
 
 let S = {
   c:[...D.c],
-  a:D.a.map(x=>[...x])
+  a:D.a.map(x => [...x])
 };
 
 let step = 0;
+
 const STEPS = 8;
 
 
-/* حساب الأوزان والاتساق */
+/* =========================
+   حسابات AHP
+========================= */
+
 function calc(v,n,P){
 
   const m = Array.from(
@@ -496,58 +574,108 @@ function calc(v,n,P){
     () => Array(n).fill(1)
   );
 
-  P.forEach(([i,j],k)=>{
+  P.forEach(([i,j],k) => {
 
     const s = Math.abs(v[k]) + 1;
-    const a = v[k] >= 0 ? s : 1/s;
+
+    const a =
+      v[k] >= 0
+        ? s
+        : 1/s;
 
     m[i][j] = a;
     m[j][i] = 1/a;
 
   });
 
-  const cs = m[0].map(
-    (_,j) => m.reduce((t,r)=>t+r[j],0)
+  const cs = m[0].map((_,j) =>
+    m.reduce(
+      (t,r) => t + r[j],
+      0
+    )
   );
 
-  const w = m.map(
-    r => r.reduce((t,x,j)=>t+x/cs[j],0)/n
+  const w = m.map(r =>
+    r.reduce(
+      (t,x,j) => t + x/cs[j],
+      0
+    ) / n
   );
 
   const lam =
-    m.map(
-      (r,i) =>
-        r.reduce((t,x,j)=>t+x*w[j],0)/w[i]
-    ).reduce((a,b)=>a+b)/n;
+    m
+      .map((r,i) =>
+        r.reduce(
+          (t,x,j) => t + x*w[j],
+          0
+        ) / w[i]
+      )
+      .reduce(
+        (a,b) => a+b,
+        0
+      ) / n;
 
-  const ci = (lam-n)/(n-1);
-  const cr = RI[n] ? ci/RI[n] : 0;
+  const ci =
+    n > 1
+      ? (lam-n)/(n-1)
+      : 0;
 
-  return {w,lam,ci,cr};
+  const cr =
+    RI[n]
+      ? ci/RI[n]
+      : 0;
+
+  return {
+    w,
+    lam,
+    ci,
+    cr
+  };
 }
 
 
-/* النص التوضيحي للمقارنة */
+/* =========================
+   وصف المقارنة
+========================= */
+
 function say(v,N,i,j){
 
-  if(v==0){
-    return "الطرفان <b>متساويان</b> في الأهمية";
+  if(v === 0){
+
+    return `
+      الطرفان <b>متساويان</b>
+      في الأهمية
+    `;
+
   }
 
-  return `<b>${N[v>0?i:j]}</b> أهم بدرجة ${
-    Math.abs(v)+1
-  } (${NM[Math.abs(v)+1]})`;
+  const preferred =
+    N[v > 0 ? i : j];
+
+  const degree =
+    Math.abs(v) + 1;
+
+  return `
+    <b>${preferred}</b>
+    أهم بدرجة ${degree}
+    (${NM[degree]})
+  `;
 }
 
 
-/* أشرطة المقارنة */
+/* =========================
+   إنشاء المقارنات
+========================= */
+
 function pairs(vals,N,P,key,idx){
 
-  return P.map(([i,j],k)=>`
+  return P.map(([i,j],k) => `
 
     <div class="pair">
 
-      <div class="l">${N[i]}</div>
+      <div class="l">
+        ${N[i]}
+      </div>
 
       <input
         type="range"
@@ -555,9 +683,12 @@ function pairs(vals,N,P,key,idx){
         max="8"
         value="${vals[k]}"
         oninput="upd('${key}',${idx},${k},this.value)"
+        aria-label="مقارنة بين ${N[i]} و${N[j]}"
       >
 
-      <div class="l">${N[j]}</div>
+      <div class="l">
+        ${N[j]}
+      </div>
 
     </div>
 
@@ -569,52 +700,102 @@ function pairs(vals,N,P,key,idx){
 }
 
 
-/* تحديث المقارنة */
+/* =========================
+   تحديث المقارنة
+========================= */
+
 function upd(key,idx,k,val){
 
-  val = +val;
+  val = Number(val);
 
-  const N = key=="c" ? C : A;
-  const P = key=="c" ? P3 : P2;
+  const N =
+    key === "c"
+      ? C
+      : A;
 
-  if(key=="c"){
+  const P =
+    key === "c"
+      ? P3
+      : P2;
+
+  if(key === "c"){
+
     S.c[k] = val;
+
   }else{
+
     S.a[idx][k] = val;
+
   }
 
-  const el = document.getElementById("sy"+k);
+  const sayEl =
+    document.getElementById("sy" + k);
 
-  if(el){
-    el.innerHTML =
-      say(val,N,P[k][0],P[k][1]);
+  if(sayEl){
+
+    sayEl.innerHTML =
+      say(
+        val,
+        N,
+        P[k][0],
+        P[k][1]
+      );
+
   }
 
   live();
 }
 
 
-/* تحديث نسبة الاتساق */
+/* =========================
+   فحص الاتساق المباشر
+========================= */
+
 function live(){
 
-  const el = document.getElementById("live");
+  const el =
+    document.getElementById("live");
 
-  if(!el) return;
+  if(!el){
+    return;
+  }
 
-  const r = calc(S.c,3,P3);
+  const r =
+    calc(
+      S.c,
+      3,
+      P3
+    );
 
   el.className =
-    "cr " + (r.cr<=.1 ? "ok" : "no");
+    "cr " +
+    (
+      r.cr <= 0.1
+        ? "ok"
+        : "no"
+    );
 
   el.innerHTML =
-    r.cr<=.1
-    ? `نسبة الاتساق CR = ${r.cr.toFixed(3)} ✔ أحكامك متسقة`
-    : `نسبة الاتساق CR = ${r.cr.toFixed(3)} ✘ أحكامك متناقضة، راجعها!`;
+    r.cr <= 0.1
+      ? `
+        نسبة الاتساق CR =
+        ${r.cr.toFixed(3)}
+        ✔ أحكامك متسقة
+      `
+      : `
+        نسبة الاتساق CR =
+        ${r.cr.toFixed(3)}
+        ✘ أحكامك متناقضة، راجعها!
+      `;
 }
 
 
-/* هرم القرار */
+/* =========================
+   هرم القرار
+========================= */
+
 const tree = `
+
 <div class="tree">
 
 <svg
@@ -623,17 +804,30 @@ const tree = `
   text-anchor="middle"
 >
 
-<g stroke="#72B0AB" stroke-width="2" fill="none">
+<g
+  stroke="#72B0AB"
+  stroke-width="2"
+  fill="none"
+>
 
-${[110,320,530].map(x=>
-  `<path d="M320 52 L${x} 105"/>`
-).join("")}
+${[110,320,530]
+  .map(x =>
+    `<path d="M320 52 L${x} 105"/>`
+  )
+  .join("")}
 
-${[110,320,530].map(x=>
-  [185,455].map(y=>
-    `<path d="M${x} 145 L${y} 200" opacity=".5"/>`
-  ).join("")
-).join("")}
+${[110,320,530]
+  .map(x =>
+    [185,455]
+      .map(y =>
+        `<path
+          d="M${x} 145 L${y} 200"
+          opacity=".5"
+        />`
+      )
+      .join("")
+  )
+  .join("")}
 
 </g>
 
@@ -653,304 +847,373 @@ ${[110,320,530].map(x=>
   font-size="16"
   font-weight="700"
 >
-الهدف: اختيار نظام نقل مستدام
+  الهدف: اختيار نظام نقل مستدام
 </text>
 
-${C.map((c,i)=>`
+${C.map((c,i) => `
 
-<rect
-  x="${[110,320,530][i]-100}"
-  y="105"
-  width="200"
-  height="40"
-  rx="20"
-  fill="#BCDDDC"
-/>
+  <rect
+    x="${[110,320,530][i]-100}"
+    y="105"
+    width="200"
+    height="40"
+    rx="20"
+    fill="#BCDDDC"
+  />
 
-<text
-  x="${[110,320,530][i]}"
-  y="131"
-  fill="#16403d"
-  font-size="14"
-  font-weight="700"
->
-${c}
-</text>
+  <text
+    x="${[110,320,530][i]}"
+    y="131"
+    fill="#16403d"
+    font-size="14"
+    font-weight="700"
+  >
+    ${c}
+  </text>
 
 `).join("")}
 
-${A.map((c,i)=>`
+${A.map((c,i) => `
 
-<rect
-  x="${[185,455][i]-100}"
-  y="200"
-  width="200"
-  height="38"
-  rx="19"
-  fill="#FE9179"
-/>
+  <rect
+    x="${[185,455][i]-100}"
+    y="200"
+    width="200"
+    height="38"
+    rx="19"
+    fill="#FE9179"
+  />
 
-<text
-  x="${[185,455][i]}"
-  y="225"
-  fill="#fff"
-  font-size="14"
-  font-weight="700"
->
-${c}
-</text>
+  <text
+    x="${[185,455][i]}"
+    y="225"
+    fill="#fff"
+    font-size="14"
+    font-weight="700"
+  >
+    ${c}
+  </text>
 
 `).join("")}
 
 </svg>
+
 </div>
 `;
 
 
-/* أزرار التنقل */
-function nav(back,label){
+/* =========================
+   أزرار التنقل
+========================= */
+
+const nav = (back,lbl) => `
+
+<div class="btns">
+
+  <button
+    class="g"
+    ${back
+      ? `onclick="go(${step-1})"`
+      : "disabled"}
+  >
+    → السابق
+  </button>
+
+  <button
+    onclick="go(${step+1})"
+  >
+    ${lbl || "التالي ←"}
+  </button>
+
+</div>
+
+`;
+
+const tg = n =>
+  `<span class="tag">الخطوة ${n} من ${STEPS}</span>`;
+
+
+/* =========================
+   شاشة المقارنة
+========================= */
+
+function cmp(
+  key,
+  idx,
+  N,
+  P,
+  title,
+  q,
+  extra
+){
 
   return `
-  <div class="btns">
 
-    <button
-      class="g"
-      ${back ? `onclick="go(${step-1})"` : "disabled"}
-    >
-      → السابق
-    </button>
+    ${tg(step+1)}
 
-    <button onclick="go(${step+1})">
-      ${label || "التالي ←"}
-    </button>
+    <h2>
+      ${title}
+    </h2>
 
-  </div>
+    <p>
+      ${q}
+    </p>
+
+    ${extra || ""}
+
+    <div class="hint">
+
+      💡 حرّك المؤشر نحو العنصر الذي تراه أهم؛
+      فكلما ابتعدت عن المنتصف زادت درجة الأفضلية
+      (من 1 إلى 9 وفق مقياس ساعاتي).
+
+    </div>
+
+    ${
+      pairs(
+        key === "c"
+          ? S.c
+          : S.a[idx],
+        N,
+        P,
+        key,
+        idx
+      )
+    }
+
+    ${
+      key === "c"
+        ? `<div id="live"></div>`
+        : `
+          <div class="hint">
+
+            ملاحظة:
+            مع بديلين فقط تكون المصفوفة
+            2×2 متسقة دائمًا،
+            فلا حاجة لفحص CR هنا.
+
+          </div>
+        `
+    }
+
+    ${nav(true)}
+
   `;
 }
 
 
-const tg =
-  n => `<span class="tag">الخطوة ${n} من ${STEPS}</span>`;
+/* =========================
+   مقياس ساعاتي
+========================= */
 
-
-/* صفحة المقارنات */
-function cmp(key,idx,N,P,title,q,extra){
-
-  return `
-
-  ${tg(step+1)}
-
-  <h2>${title}</h2>
-
-  <p>${q}</p>
-
-  ${extra || ""}
-
-  <div class="hint">
-    💡 حرّك المؤشر نحو العنصر الذي تراه أهم؛
-    فكلما ابتعدت عن المنتصف زادت درجة الأفضلية
-    (من 1 إلى 9 وفق مقياس ساتي).
-  </div>
-
-  ${pairs(
-    key=="c" ? S.c : S.a[idx],
-    N,
-    P,
-    key,
-    idx
-  )}
-
-  ${
-    key=="c"
-    ? '<div id="live"></div>'
-    : '<div class="hint">ملاحظة: مع بديلين فقط تكون المصفوفة 2×2 متسقة دائمًا، فلا حاجة لفحص CR هنا.</div>'
-  }
-
-  ${nav(true)}
-
-  `;
-}
-
-
-/* مقياس ساتي */
 const scale = `
 
 <table>
 
 <tr>
-<th>الدرجة</th>
-<th>المعنى (مقياس ساتي)</th>
+  <th>الدرجة</th>
+  <th>المعنى (مقياس ساعاتي)</th>
 </tr>
 
 <tr>
-<td>1</td>
-<td>أهمية متساوية</td>
+  <td>1</td>
+  <td>أهمية متساوية</td>
 </tr>
 
 <tr>
-<td>3</td>
-<td>أهمية متوسطة لأحد العنصرين</td>
+  <td>3</td>
+  <td>أهمية متوسطة لأحد العنصرين</td>
 </tr>
 
 <tr>
-<td>5</td>
-<td>أهمية قوية</td>
+  <td>5</td>
+  <td>أهمية قوية</td>
 </tr>
 
 <tr>
-<td>7</td>
-<td>أهمية قوية جدًا</td>
+  <td>7</td>
+  <td>أهمية قوية جدًا</td>
 </tr>
 
 <tr>
-<td>9</td>
-<td>أهمية مطلقة</td>
+  <td>9</td>
+  <td>أهمية مطلقة</td>
 </tr>
 
 <tr>
-<td>2، 4، 6، 8</td>
-<td>قيم وسطية بين الدرجات</td>
+  <td>2، 4، 6، 8</td>
+  <td>قيم وسطية بين الدرجات</td>
 </tr>
 
 </table>
+
 `;
 
 
-/* إنشاء الصفحات */
+/* =========================
+   عرض الخطوات
+========================= */
+
 function render(){
 
-  const v = document.getElementById("view");
+  const v =
+    document.getElementById("view");
+
+  if(!v){
+    return;
+  }
 
   let h = "";
 
 
-  /* الخطوة 1 */
-  if(step==0){
+/* =========================
+   الخطوة 1
+========================= */
+
+  if(step === 0){
 
     h = `
 
-    ${tg(1)}
+      ${tg(1)}
 
-    <h2>
-      مفهوم التحليل متعدد المعايير ونبذة عن AHP
-    </h2>
+      <h2>
+        مفهوم التحليل متعدد المعايير
+        ونبذة عن AHP
+      </h2>
 
-    <div class="box a one">
+      <div class="box a one">
 
-      <b>
-        🧩 التحليل متعدد المعايير
-        (Multi-Criteria Analysis – MCA):
-      </b>
+        <b>
+          🧩 التحليل متعدد المعايير
+          (Multi-Criteria Analysis – MCA):
+        </b>
 
-      أسلوب لدعم القرار يقيّم عدة بدائل وفق معايير
-      متعددة، وغالبًا متعارضة (بيئية واقتصادية واجتماعية)،
-      بدلًا من الاعتماد على معيار واحد مثل التكلفة.
+        أسلوب لدعم القرار يقيّم عدة بدائل
+        وفق معايير متعددة، وغالبًا متعارضة
+        (بيئية واقتصادية واجتماعية)،
+        بدلًا من الاعتماد على معيار واحد مثل التكلفة.
 
-      وهو مفيد في السياسات البيئية لأن القرارات فيها
-      توازن بين مصالح متعددة.
-
-    </div>
-
-
-    <div
-      class="box p one"
-      style="margin-top:10px"
-    >
-
-      <b>
-        🧭 عملية التحليل الهرمي
-        (Analytic Hierarchy Process – AHP):
-      </b>
-
-      إحدى أشهر طرق التحليل متعدد المعايير،
-      طوّرها <b>توماس ساتي (Thomas Saaty)</b>.
-
-      تفكك هذه الطريقة المشكلة إلى هرم من ثلاثة مستويات:
-      الهدف ثم المعايير ثم البدائل، وتحوّل أحكام صانع
-      القرار إلى أرقام عبر المقارنات الثنائية، ثم تحسب
-      أوزان المعايير وترتب البدائل، وتتحقق في النهاية
-      من اتساق الأحكام.
-
-    </div>
-
-
-    <h3>السيناريو</h3>
-
-    <p>
-
-      أنت عضو في لجنة تخطيط حضري تضع سياسة
-      <b>للنقل المستدام</b>.
-
-      عليك الاختيار بين
-      <b>حافلات كهربائية (BRT)</b>
-      و<b>مترو خفيف (LRT)</b>
-
-      وفق ثلاثة معايير:
-      البيئي والاقتصادي والاجتماعي.
-
-    </p>
-
-
-    <div class="grid">
-
-      <div class="box w">
-
-        <b>🎯 الهدف التعليمي</b>
-
-        أن يطبّق الطالب عملية التحليل الهرمي
-        (AHP) لاتخاذ قرار وفق المعايير البيئية
-        والاقتصادية والاجتماعية.
+        وهو مفيد في السياسات البيئية لأن القرارات فيها
+        توازن بين مصالح متعددة.
 
       </div>
 
+      <div
+        class="box p one"
+        style="margin-top:10px"
+      >
 
-      <div class="box w">
+        <b>
+          🧭 عملية التحليل الهرمي
+          (Analytic Hierarchy Process – AHP):
+        </b>
 
-        <b>🏁 الناتج</b>
+        إحدى أشهر طرق التحليل متعدد المعايير،
+        طوّرها <b>توماس ساعاتي (Thomas Saaty)</b>
+        في سبعينيات القرن الماضي.
 
-        أوزان المعايير + ترتيب البدائل +
-        فحص الاتساق.
+        تفكّك هذه الطريقة المشكلة إلى هرم من ثلاثة
+        مستويات (الهدف ثم المعايير ثم البدائل)،
+        وتحوّل أحكام صانع القرار إلى أرقام عبر
+        المقارنات الثنائية، ثم تحسب أوزان المعايير
+        وترتّب البدائل، وتتحقق في النهاية من اتساق الأحكام.
 
       </div>
 
-    </div>
+      <h3>السيناريو</h3>
 
-    ${nav(false,"ابدأ الرحلة ←")}
+      <p>
+
+        أنت عضو في لجنة تخطيط حضري تضع سياسة
+        <b>للنقل المستدام</b>.
+
+        عليك الاختيار بين
+        <b>حافلات كهربائية (BRT)</b>
+        و<b>مترو خفيف (LRT)</b>
+
+        وفق ثلاثة معايير:
+        البيئي والاقتصادي والاجتماعي.
+
+      </p>
+
+      <div class="grid">
+
+        <div class="box w">
+
+          <b>🎯 الهدف التعليمي</b>
+
+          أن يطبّق الطالب عملية التحليل الهرمي
+          (AHP) لاتخاذ قرار وفق المعايير البيئية
+          والاقتصادية والاجتماعية.
+
+        </div>
+
+        <div class="box w">
+
+          <b>🏁 الناتج</b>
+
+          أوزان المعايير +
+          ترتيب البدائل +
+          فحص الاتساق.
+
+        </div>
+
+      </div>
+
+      ${nav(false,"ابدأ الرحلة ←")}
 
     `;
   }
 
 
-  /* الخطوة 2 */
-  else if(step==1){
+/* =========================
+   الخطوة 2
+========================= */
+
+  else if(step === 1){
 
     h = `
 
-    ${tg(2)}
+      ${tg(2)}
 
-    <h2>بناء هرم القرار</h2>
+      <h2>
+        بناء هرم القرار
+      </h2>
 
-    <p>
-      أول خطوات AHP: تفكيك المشكلة إلى مستويات:
-      <b>الهدف</b> ← <b>المعايير (3)</b> ←
-      <b>البدائل (2)</b>.
-    </p>
+      <p>
 
-    ${tree}
+        أول خطوات AHP:
+        تفكيك المشكلة إلى مستويات:
 
-    <div class="hint">
-      الخطوة التالية: نقارن المعايير ببعضها ثنائيًا
-      لنعرف وزن كل معيار.
-    </div>
+        <b>الهدف</b>
+        ←
+        <b>المعايير (3)</b>
+        ←
+        <b>البدائل (2)</b>.
 
-    ${nav(true)}
+      </p>
+
+      ${tree}
+
+      <div class="hint">
+
+        الخطوة التالية:
+        نقارن المعايير ببعضها ثنائيًا
+        لنعرف وزن كل معيار.
+
+      </div>
+
+      ${nav(true)}
 
     `;
   }
 
 
-  /* الخطوة 3 */
-  else if(step==2){
+/* =========================
+   الخطوة 3
+========================= */
+
+  else if(step === 2){
 
     h = cmp(
       "c",
@@ -961,6 +1224,7 @@ function render(){
       "أيّ المعيارين أهم لسياسة النقل في مدينتك؟",
 
       `
+
       <div class="box a one">
 
         <b>
@@ -968,8 +1232,8 @@ function render(){
           (<span class="en">Pairwise Comparison</span>)؟
         </b>
 
-        مقارنة عنصرين فقط في كل مرة وفق درجة أهمية
-        نسبية، بدل الحكم على الجميع دفعة واحدة،
+        مقارنة عنصرين فقط في كل مرة وفق درجة
+        أهمية نسبية، بدل الحكم على الجميع دفعة واحدة،
         مما يجعل الحكم أسهل وأدق.
 
         تُجمع النتائج في مصفوفة تُستخرج منها الأوزان.
@@ -977,15 +1241,20 @@ function render(){
       </div>
 
       ${scale}
+
       `
     );
+
   }
 
 
-  /* الخطوات 4 و5 و6 */
-  else if(step<=5){
+/* =========================
+   الخطوات 4–6
+========================= */
 
-    const k = step-3;
+  else if(step >= 3 && step <= 5){
+
+    const k = step - 3;
 
     h = cmp(
       "a",
@@ -993,370 +1262,634 @@ function render(){
       A,
       P2,
       "المقارنة الثنائية للبدائل وفق المعيار " +
-      C[k].split(":")[0],
+        C[k].split(":")[0],
       `وفق معيار «${C[k]}» أيّ البديلين أفضل؟`
     );
+
   }
 
 
-  /* الخطوة 7 */
-  else if(step==6){
+/* =========================
+   الخطوة 7
+========================= */
 
-    const wc = calc(S.c,3,P3);
+  else if(step === 6){
+
+    const wc =
+      calc(
+        S.c,
+        3,
+        P3
+      );
 
     const wa =
-      S.a.map(a=>calc(a,2,P2));
+      S.a.map(a =>
+        calc(
+          a,
+          2,
+          P2
+        )
+      );
 
     const sc =
-      A.map((_,a)=>
+      A.map((_,a) =>
         C.reduce(
-          (t,_,k)=>
-            t + wc.w[k] * wa[k].w[a],
+          (t,_,k) =>
+            t +
+            wc.w[k] *
+            wa[k].w[a],
           0
         )
       );
 
     const o =
       sc
-      .map((s,i)=>[s,i])
-      .sort((a,b)=>b[0]-a[0]);
-
+        .map((s,i) => [s,i])
+        .sort(
+          (a,b) => b[0]-a[0]
+        );
 
     h = `
 
-    ${tg(7)}
+      ${tg(7)}
 
-    <h2>النتيجة النهائية</h2>
+      <h2>
+        النتيجة النهائية
+      </h2>
 
-    <div class="win">
-      🏆 البديل الأفضل:
-      ${A[o[0][1]]}
-      (${(o[0][0]*100).toFixed(1)}%)
-    </div>
+      <div class="win">
 
-
-    <h3>أوزان المعايير</h3>
-
-    ${C.map((c,i)=>`
-
-      <div class="bar">
-
-        <span>${c.split(":")[0]}</span>
-
-        <div class="t">
-          <span style="width:${wc.w[i]*100}%"></span>
-        </div>
-
-        <b>
-          ${(wc.w[i]*100).toFixed(0)}%
-        </b>
+        🏆 البديل الأفضل:
+        ${A[o[0][1]]}
+        (${(o[0][0]*100).toFixed(1)}%)
 
       </div>
 
-    `).join("")}
-
-
-    <h3>الترتيب النهائي للبدائل</h3>
-
-    ${o.map(([s,i],n)=>`
-
-      <div class="bar">
-
-        <span>
-          ${n+1}. ${A[i]}
-        </span>
-
-        <div class="t">
-          <span style="width:${s*100}%"></span>
-        </div>
-
-        <b>
-          ${(s*100).toFixed(0)}%
-        </b>
-
-      </div>
-
-    `).join("")}
-
-
-    <h3>فحص الاتساق</h3>
-
-    <table>
-
-      <tr>
-        <th>المصفوفة</th>
-        <th>λmax</th>
-        <th>CI</th>
-        <th>CR</th>
-        <th>الحكم</th>
-      </tr>
-
-      <tr>
-        <td>المعايير (3×3)</td>
-        <td>${wc.lam.toFixed(3)}</td>
-        <td>${wc.ci.toFixed(3)}</td>
-        <td>${wc.cr.toFixed(3)}</td>
-        <td>${wc.cr<=.1 ? "✔ متسق" : "✘ راجع"}</td>
-      </tr>
-
-      <tr>
-        <td>البدائل (2×2) لكل معيار</td>
-        <td>2</td>
-        <td>0</td>
-        <td>0</td>
-        <td>✔ متسق دائمًا</td>
-      </tr>
-
-    </table>
-
-
-    <div class="cr ${wc.cr<=.1 ? "ok" : "no"}">
+      <h3>
+        أوزان المعايير
+      </h3>
 
       ${
-        wc.cr<=.1
-        ? "أحكامك على المعايير متسقة، فالنتيجة موثوقة."
-        : "أحكامك على المعايير غير متسقة؛ لا تعتمد النتيجة قبل مراجعتها."
+        C.map((c,i) => `
+
+          <div class="bar">
+
+            <span>
+              ${c.split(":")[0]}
+            </span>
+
+            <div class="t">
+
+              <span
+                style="width:${wc.w[i]*100}%"
+              ></span>
+
+            </div>
+
+            <b>
+              ${(wc.w[i]*100).toFixed(0)}%
+            </b>
+
+          </div>
+
+        `).join("")
       }
 
-    </div>
+      <h3>
+        الترتيب النهائي للبدائل
+      </h3>
 
+      ${
+        o.map(([s,i],n) => `
 
-    <div class="hint">
+          <div class="bar">
 
-      🔬 <b>جرّب:</b>
+            <span>
+              ${n+1}. ${A[i]}
+            </span>
 
-      ضع أحكامًا دائرية عمدًا
-      (البيئي أهم من الاقتصادي، والاقتصادي أهم
-      من الاجتماعي، والاجتماعي أهم من البيئي)
-      وراقب ارتفاع CR.
+            <div class="t">
 
-    </div>
+              <span
+                style="width:${s*100}%"
+              ></span>
 
+            </div>
 
-    <div class="btns">
+            <b>
+              ${(s*100).toFixed(0)}%
+            </b>
 
-      <button
-        class="g"
-        onclick="go(2)"
+          </div>
+
+        `).join("")
+      }
+
+      <h3>
+        فحص الاتساق
+      </h3>
+
+      <table>
+
+        <tr>
+          <th>المصفوفة</th>
+          <th>λmax</th>
+          <th>CI</th>
+          <th>CR</th>
+          <th>الحكم</th>
+        </tr>
+
+        <tr>
+
+          <td>
+            المعايير (3×3)
+          </td>
+
+          <td>
+            ${wc.lam.toFixed(3)}
+          </td>
+
+          <td>
+            ${wc.ci.toFixed(3)}
+          </td>
+
+          <td>
+            ${wc.cr.toFixed(3)}
+          </td>
+
+          <td>
+            ${
+              wc.cr <= .1
+                ? "✔ متسق"
+                : "✘ راجع"
+            }
+          </td>
+
+        </tr>
+
+        <tr>
+
+          <td>
+            البدائل (2×2) لكل معيار
+          </td>
+
+          <td>2</td>
+          <td>0</td>
+          <td>0</td>
+
+          <td>
+            ✔ متسق دائمًا
+          </td>
+
+        </tr>
+
+      </table>
+
+      <div
+        class="cr ${wc.cr <= .1 ? "ok" : "no"}"
       >
-        → عدّل المعايير
-      </button>
 
-      <button
-        onclick="S.c=[4,-4,4];go(2)"
-      >
-        اختبر عدم الاتساق
-      </button>
+        ${
+          wc.cr <= .1
+            ? "أحكامك على المعايير متسقة، فالنتيجة موثوقة."
+            : "أحكامك على المعايير غير متسقة؛ لا تعتمد النتيجة قبل مراجعتها."
+        }
 
-      <button
-        class="g"
-        onclick="go(7)"
-      >
-        نسبة الاتساق والمراجع ←
-      </button>
+      </div>
 
-    </div>
+      <div class="hint">
+
+        🔬 <b>جرّب:</b>
+
+        ضع أحكامًا دائرية عمدًا
+        (البيئي أهم من الاقتصادي،
+        والاقتصادي أهم من الاجتماعي،
+        والاجتماعي أهم من البيئي)
+        وراقب ارتفاع CR.
+
+      </div>
+
+      <div class="btns">
+
+        <button
+          class="g"
+          onclick="go(2)"
+        >
+          → عدّل المعايير
+        </button>
+
+        <button
+          onclick="testInconsistency()"
+        >
+          اختبر عدم الاتساق
+        </button>
+
+        <button
+          class="g"
+          onclick="go(7)"
+        >
+          نسبة الاتساق والمراجع ←
+        </button>
+
+      </div>
 
     `;
   }
 
 
-  /* الخطوة 8 */
-  else{
+/* =========================
+   الخطوة 8
+========================= */
+
+  else {
 
     h = `
 
-    ${tg(8)}
+      ${tg(8)}
 
-    <h2>
-      نسبة الاتساق والمعادلات والمراجع
-    </h2>
+      <h2>
+        نسبة الاتساق والمعادلات والمراجع
+      </h2>
 
+      <div class="box a one">
 
-    <div class="box a one">
+        <b>
 
-      <b>
-        ما نسبة الاتساق
-        (<span class="en">Consistency Ratio – CR</span>)؟
-      </b>
+          ما نسبة الاتساق
+          (<span class="en">
+            Consistency Ratio – CR
+          </span>)؟
 
-      تقيس مدى منطقية أحكامك الثنائية.
+        </b>
 
-      فإذا فضّلت (أ) على (ب)، وفضّلت (ب) على (ج)،
-      فالمنطق يقتضي أن تفضّل (أ) على (ج) بدرجة
-      تتسق مع الحكمين السابقين.
+        تقيس مدى منطقية أحكامك الثنائية.
 
-      وكلما ابتعدت أحكامك عن ذلك ارتفعت قيمة CR.
+        فإذا فضّلت
+        <span class="k">(أ)</span>
+        على
+        <span class="k">(ب)</span>،
 
-      <span class="th">
-        تُعد الأحكام مقبولة عادة إذا كانت
-        <bdi dir="ltr"><b>CR ≤ 0.10</b></bdi>
-      </span>
+        وفضّلت
+        <span class="k">(ب)</span>
+        على
+        <span class="k">(ج)</span>،
 
-    </div>
+        فالمنطق يقتضي أن تفضّل
+        <span class="k">(أ)</span>
+        على
+        <span class="k">(ج)</span>
+        بدرجة تتسق مع الحكمين السابقين.
 
+        وكلما ابتعدت أحكامك عن ذلك ارتفعت قيمة CR.
 
-    <h3>المعادلات</h3>
+        تُعدّ الأحكام مقبولة عادة
 
-    <div class="f">
-      wᵢ = (1/n) · Σⱼ ( aᵢⱼ / Σₖ aₖⱼ )
-    </div>
+        <span class="th">
 
-    <div class="f">
-      λmax = (1/n) · Σᵢ [ (A·w)ᵢ / wᵢ ]
-    </div>
+          إذا&nbsp;كانت&nbsp;
 
-    <div class="f">
-      CI = (λmax − n) / (n − 1)
-    </div>
+          <bdi dir="ltr">
+            <b>CR&nbsp;≤&nbsp;0.10</b>
+          </bdi>
 
-    <div class="f">
-      CR = CI / RI
-    </div>
+        </span>
 
+      </div>
 
-    <p>
+      <p>
+        📖 مرجع إضافي عن الاتساق:
+      </p>
 
-      الوزن: تُطبَّع أعمدة المصفوفة ثم يُؤخذ متوسط
-      كل صف. وحيث n عدد العناصر، وA مصفوفة
-      المقارنات الثنائية، وw متجه الأوزان.
+      <ul class="ref">
 
-    </p>
+        <li>
 
+          Wedley, W. C. (1993).
+          Consistency prediction for incomplete
+          AHP matrices.
+          <i>
+            Mathematical and Computer Modelling
+          </i>,
+          17(4–5), 151–161.
 
-    <h3>👤 صاحب النظرية</h3>
+          <a
+            href="https://doi.org/10.1016/0895-7177(93)90183-Y"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            DOI
+          </a>
 
-    <p>
+        </li>
 
-      <b>توماس ساتي (Thomas Saaty، 1926–2017)</b>:
-      عالم رياضيات أمريكي، ومبتكر عملية التحليل الهرمي.
+      </ul>
 
-    </p>
+      <h3>
+        المعادلات
+      </h3>
 
+      <div class="f">
 
-    <h3>📚 المراجع</h3>
+        w<sub>i</sub> = (1/n) · Σ<sub>j</sub>
+        ( a<sub>ij</sub> /
+        Σ<sub>k</sub> a<sub>kj</sub> )
 
-    <ul class="ref">
+      </div>
 
-      <li>
-        Saaty, T. (1977).
-        A scaling method for priorities in hierarchical structures.
-        <i>Journal of Mathematical Psychology</i>, 15(3), 234–281.
-        <br>
-        <a
-          href="https://doi.org/10.1016/0022-2496(77)90033-5"
-          target="_blank"
-          rel="noopener"
+      <div class="f">
+
+        λ<sub>max</sub> = (1/n) · Σ<sub>i</sub>
+        [ (A·w)<sub>i</sub> / w<sub>i</sub> ]
+
+      </div>
+
+      <div class="f">
+
+        CI = (λ<sub>max</sub> − n) /
+        (n − 1)
+
+      </div>
+
+      <div class="f">
+
+        CR = CI / RI
+
+      </div>
+
+      <p>
+
+        الوزن: تُطبَّع أعمدة المصفوفة ثم يُؤخذ
+        متوسط كل صف.
+
+        وحيث n عدد العناصر،
+        وA مصفوفة المقارنات الثنائية،
+        وw متجه الأوزان،
+        وRI المؤشر العشوائي
+        (Random Index):
+
+        0 للمصفوفة 1×1 و2×2،
+        و0.58 للمصفوفة 3×3،
+        و0.90 للمصفوفة 4×4،
+        و1.12 للمصفوفة 5×5.
+
+      </p>
+
+      <h3>
+        👤 صاحب النظرية
+      </h3>
+
+      <p>
+
+        <b>
+          توماس ساعاتي
+          (Thomas Saaty، 1926–2017)
+        </b>:
+
+        عالم رياضيات أمريكي،
+        وأستاذ في جامعة بيتسبرغ،
+        ومبتكر عملية التحليل الهرمي.
+
+      </p>
+
+      <h3>
+        💻 برامج لتطبيق عملية التحليل الهرمي (AHP)
+      </h3>
+
+      <ul class="ref">
+
+        <li>
+
+          SpiceLogic:
+
+          <a
+            href="https://spicelogic.com/products/ahp-software-30"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            https://spicelogic.com/products/ahp-software-30
+          </a>
+
+        </li>
+
+        <li>
+
+          Transparent Choice:
+
+          <a
+            href="https://www.transparentchoice.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            https://www.transparentchoice.com/
+          </a>
+
+        </li>
+
+        <li>
+
+          OnlineOutput:
+
+          <a
+            href="https://onlineoutput.com/ahp-software/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            https://onlineoutput.com/ahp-software/
+          </a>
+
+        </li>
+
+      </ul>
+
+      <h3>
+        📚 المراجع
+      </h3>
+
+      <ul class="ref">
+
+        <li>
+
+          Saaty, T. (1977).
+          A scaling method for priorities
+          in hierarchical structures.
+          <i>
+            Journal of Mathematical Psychology
+          </i>,
+          15(3), 234–281.
+
+          <a
+            href="https://doi.org/10.1016/0022-2496(77)90033-5"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            DOI
+          </a>
+
+        </li>
+
+        <li>
+
+          Ramanujam, V., &amp; Saaty, T. (1981).
+          Technological choice in the less developed
+          countries: An analytic hierarchy approach.
+          <i>
+            Technological Forecasting and Social Change
+          </i>,
+          19(1), 81–98.
+
+          <a
+            href="https://doi.org/10.1016/0040-1625(81)90050-0"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            DOI
+          </a>
+
+        </li>
+
+        <li>
+
+          Emshoff, J. R., &amp; Saaty, T. (1982).
+          Applications of the analytic hierarchy process
+          to long range planning processes.
+          <i>
+            European Journal of Operational Research
+          </i>,
+          10(2), 131–143.
+
+          <a
+            href="https://doi.org/10.1016/0377-2217(82)90153-9"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            DOI
+          </a>
+
+        </li>
+
+        <li>
+
+          Saaty, T. (1990).
+          How to make a decision:
+          The analytic hierarchy process.
+          <i>
+            European Journal of Operational Research
+          </i>,
+          48(1), 9–26.
+
+          <a
+            href="https://doi.org/10.1016/0377-2217(90)90057-I"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            DOI
+          </a>
+
+        </li>
+
+      </ul>
+
+      <div class="hint">
+
+        تنبيه:
+        إتاحة النص الكامل تختلف من مجلة لأخرى،
+        وقد تحتاج إلى الدخول عبر مكتبة جامعتك.
+
+      </div>
+
+      <div class="btns">
+
+        <button
+          class="g"
+          onclick="go(6)"
         >
-          DOI
-        </a>
-      </li>
+          → العودة للنتيجة
+        </button>
 
-
-      <li>
-        Saaty, T. (1990).
-        How to make a decision: The analytic hierarchy process.
-        <i>European Journal of Operational Research</i>, 48(1), 9–26.
-        <br>
-        <a
-          href="https://doi.org/10.1016/0377-2217(90)90057-I"
-          target="_blank"
-          rel="noopener"
+        <button
+          onclick="resetSimulation()"
         >
-          DOI
-        </a>
-      </li>
+          ↺ إعادة المحاكاة
+        </button>
 
-
-      <li>
-        Wedley, W. C. (1993).
-        Consistency prediction for incomplete AHP matrices.
-        <i>Mathematical and Computer Modelling</i>, 17(4–5), 151–161.
-        <br>
-        <a
-          href="https://doi.org/10.1016/0895-7177(93)90183-Y"
-          target="_blank"
-          rel="noopener"
-        >
-          DOI
-        </a>
-      </li>
-
-    </ul>
-
-
-    <div class="hint">
-
-      تنبيه: إتاحة النص الكامل تختلف من مجلة لأخرى،
-      وقد تحتاج إلى الدخول عبر مكتبة جامعتك.
-
-    </div>
-
-
-    <div class="btns">
-
-      <button
-        class="g"
-        onclick="go(6)"
-      >
-        → العودة للنتيجة
-      </button>
-
-      <button
-        onclick="resetSimulation()"
-      >
-        ↺ إعادة المحاكاة
-      </button>
-
-    </div>
+      </div>
 
     `;
   }
 
+
+  /* =========================
+     تحديث الصفحة
+  ========================= */
 
   v.innerHTML = h;
 
+  const prog =
+    document.getElementById("prog");
 
-  /* شريط التقدم */
-  document.getElementById("prog").innerHTML =
-    Array.from(
-      {length:STEPS},
-      (_,i)=>
-        `<i class="${i<=step ? "on" : ""}"></i>`
-    ).join("");
+  if(prog){
 
+    prog.innerHTML =
+      Array.from(
+        {length:STEPS},
+        (_,i) =>
+          `<i class="${i <= step ? "on" : ""}"></i>`
+      ).join("");
 
-  if(step==2){
-    live();
   }
 
+  if(step === 2){
+    live();
+  }
 
   window.scrollTo({
     top:0,
     behavior:"smooth"
   });
+
 }
 
 
-/* الانتقال بين الخطوات */
+/* =========================
+   الانتقال بين الخطوات
+========================= */
+
 function go(n){
 
   step =
     Math.max(
       0,
-      Math.min(STEPS-1,n)
+      Math.min(
+        STEPS-1,
+        n
+      )
     );
 
   render();
 }
 
 
-/* إعادة المحاكاة */
+/* =========================
+   اختبار عدم الاتساق
+========================= */
+
+function testInconsistency(){
+
+  S.c = [4,-4,4];
+
+  go(2);
+}
+
+
+/* =========================
+   إعادة المحاكاة
+========================= */
+
 function resetSimulation(){
 
   S = {
     c:[...D.c],
-    a:D.a.map(x=>[...x])
+    a:D.a.map(x => [...x])
   };
 
   step = 0;
@@ -1365,26 +1898,45 @@ function resetSimulation(){
 }
 
 
-/* ضبط ارتفاع الرأس */
+/* =========================
+   حساب ارتفاع الرأس
+========================= */
+
 function hh(){
 
   const header =
     document.querySelector("header");
 
-  if(header){
-
-    document.documentElement.style
-      .setProperty(
-        "--hh",
-        header.offsetHeight+"px"
-      );
+  if(!header){
+    return;
   }
+
+  document.documentElement.style.setProperty(
+    "--hh",
+    header.offsetHeight + "px"
+  );
+}
+
+window.addEventListener(
+  "resize",
+  hh
+);
+
+hh();
+
+if(
+  document.fonts &&
+  document.fonts.ready
+){
+
+  document.fonts.ready.then(hh);
+
 }
 
 
-window.addEventListener("resize",hh);
-
-hh();
+/* =========================
+   تشغيل المحاكاة
+========================= */
 
 render();
 
@@ -1392,4 +1944,3 @@ render();
 
 </body>
 </html>
-```
